@@ -34,7 +34,9 @@ mongoose.connection.on('connected', () => {
 });
 
 
-app.use(cors()); // Enable CORS for all routes
+app.use(cors({
+  origin: 'https://king-prawn-app-g9cdy.ondigitalocean.app',
+}));
 
 app.use(BodyParser.json());
 
