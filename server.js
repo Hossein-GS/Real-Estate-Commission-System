@@ -33,9 +33,8 @@ mongoose.connection.on('connected', () => {
   console.log('Connected to MongoDB');
 });
 
-
 app.use(cors({
-  origin: 'https://king-prawn-app-g9cdy.ondigitalocean.app',
+	origin: '*'
 }));
 
 app.use(BodyParser.json());
@@ -87,9 +86,11 @@ app.get("/portal/handleExport", async (req, res) => {
         fs.writeFile(excelFilePath, excelBuffer, (err) => {
           if (err) {
             console.error('Failed to write Excel file: ', err);
+			
             res.json({ success: false });
           } else {
             console.log('Excel file created successfully!');
+			
             res.json({ success: true, fileName: excelFileName });
           }
         });
@@ -97,6 +98,7 @@ app.get("/portal/handleExport", async (req, res) => {
     });
   } catch (err) {
     console.error('Error while retrieving data from MongoDB: ', err);
+	
     res.json({ success: false });
   }
 });
@@ -106,8 +108,10 @@ app.post("/portal/checkDB", async(req,res) => {
   const dbStatus = mongoose.connection.readyState;
 
   if (dbStatus === 1) {
+	  
     res.json({ success: true});
   } else {
+	  
     res.json({ success: false});
   }
 })
@@ -117,7 +121,7 @@ app.post("/portal/signup", (req,res) => {
 	
 	// checks for the inputs recieved
 	if(!req.body.email || !req.body.password || !req.body.name || !req.body.position){ 
-	
+		
 		res.json({success: false, error: "Enter needed params!"});
 		return;
 	}
@@ -140,25 +144,31 @@ app.post("/portal/signup", (req,res) => {
 //  to check the login inputs of the user and combine with the Database and creating a token
 app.post("/portal/login", (req,res) => {
 	if(!req.body.email || !req.body.password){
+		 
 		res.json({success: false, error: "Enter needed params"});
 		return;
 	}
 	database.Employees.findOne({email: req.body.email}).then((Employees) => {
 		if(!Employees){
+			 
 			res.json({success:false, error:"Wrong password/email"});
 		} else {
 			if(!Bcrypt.compareSync(req.body.password, Employees.password)){
+				 
 				res.json({success:false, error:"Wrong password/email"});
 			} else {
 				token = JsonWebToken.sign({id: Employees._id, email: Employees.email}, SECRET_JWT_CODE);
 				if(Employees.position === "Admin"){
+					 
 					res.json({success: "Admin", token: token, name: Employees.Name, position: Employees.position});
 				} else {
+					 
 					res.json({success: "Employee", token: token, name: Employees.Name, position: Employees.position});
 				}
 			}
 		}
 	}).catch((err) => {
+		 
 		res.json({success:false, error:err});
 	});
 });
@@ -166,14 +176,17 @@ app.post("/portal/login", (req,res) => {
 // for confirming user tokens 
 app.post('/portal/confirmUser', (req,res) => {
 	if(!req.body.EmployeeName || !req.body.EmployeePosition || !req.body.EmployeeToken){
+		 
 		res.json({success: false, error: "Enter needed params"});
 		return;
 	}
 	database.Employees.findOne({Name: req.body.EmployeeName, position: req.body.EmployeePosition }).then((Employees) => {
 		if(!Employees){
+			 
 			res.json({success:false, error:"Wrong password/email"});
 		} else {
 			if(req.body.EmployeeToken === token){
+				 
 				res.json({success: true});
 				console.log('successfully confirmed');
 			}
@@ -185,6 +198,7 @@ app.post('/portal/confirmUser', (req,res) => {
 			}
 		}
 	}).catch((err) => {
+		 
 		res.json({success:false, error:err});
 	});
 })
@@ -193,13 +207,16 @@ app.post('/portal/confirmUser', (req,res) => {
 app.get('/portal/getEmployees', async (req, res) => {
   try {
     const employees = await database.Employees.find();
+	 
     res.json({ success: true, employees: employees });
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
 app.post('/portal/getSelectedEmployees', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -210,28 +227,33 @@ app.post('/portal/getSelectedEmployees', async (req, res) => {
     selectedEmployees = await database.Employees.find({
       _id: { $in: selectedRows },
     });
-
+	 
     res.json({ success: true, selectedEmployees: selectedEmployees });
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
 app.post('/portal/updateEmplyee', async (req,res) => {
 	if(!req.body.email || !req.body.password || !req.body.name || !req.body.position)
 	{
+		 
 		res.json({success: false, error: "Enter needed params!"});
 		return;
 	}
 		
 		const lookForEmployee = await database.Employees.find({_id:{$in: selectedEmployees}}, ).catch((err) => {res.json({success:false});});
 			database.Employees.updateMany({_id:{$in: selectedRows}}, {Name: req.body.name, position: req.body.position, email: req.body.email}).catch((err) => {
+				 
 				res.json({success:false});
 		});
 	selectedEmployees = NULL;
+	 
 	res.json({success:true});
 })
 app.post('/portal/deleteSelectedEmployees', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -241,8 +263,10 @@ app.post('/portal/deleteSelectedEmployees', async (req, res) => {
   try {
     database.Employees.deleteMany({_id: { $in: selectedRows }}).then((result) => {console.log(`${result.deletedCount} employees deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -250,24 +274,30 @@ app.post('/portal/deleteSelectedEmployees', async (req, res) => {
 // project functionalities
 app.post("/portal/addProject", (req,res) => {
 	if(!req.body.dev || !req.body.project){
+		 
 		res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
 	database.Development.findOneAndUpdate({developer: req.body.dev}, {$push: {project: req.body.project}}).catch((err) => {
+		 
 		res.json({success:false, error: err});
 	});
+	 
 	res.json({success:true});
 });
 app.get('/portal/getProjects', async (req,res) => {
 	try {
 		const projects = await database.Development.find();
+		 
 		res.json({success: true, projects:projects});
 	} catch (error) {
+		 
 		res.json({success: true, error:error});
 	}
 })
 app.post('/portal/getSelectedProjects', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -278,14 +308,16 @@ app.post('/portal/getSelectedProjects', async (req, res) => {
 	selectedProjects = await database.Development.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedProjects: selectedProjects });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedProjects', async (req, res) => {
   if (!req.body.dev || !req.body.project) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -296,8 +328,10 @@ app.post('/portal/deleteSelectedProjects', async (req, res) => {
   try {
     database.Development.updateOne({developer:dev}, {$pull: {project: project}}).then((result) => {console.log(`project deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -305,26 +339,32 @@ app.post('/portal/deleteSelectedProjects', async (req, res) => {
 // team functionalities
 app.post("/portal/addTeam", (req,res) => {
 	if(!req.body.team){
+		 
 		res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
 	database.Team.create({
 		team: req.body.team,
 	}).catch((err) => {
+		 
 		res.json({success:false, error: err});
 	});
+	 
 	res.json({success:true});
 });
 app.get('/portal/getTeams', async (req,res) => {
 	try {
 		const teams = await database.Team.find();
+		 
 		res.json({success: true, teams:teams});
 	} catch (error) {
+		 
 		res.json({success: true, error:error});
 	}
 })
 app.post('/portal/getSelectedTeams', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -335,14 +375,16 @@ app.post('/portal/getSelectedTeams', async (req, res) => {
 	selectedTeams = await database.Team.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedTeams: selectedTeams });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedTeams', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -354,6 +396,7 @@ app.post('/portal/deleteSelectedTeams', async (req, res) => {
 	})
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -361,26 +404,32 @@ app.post('/portal/deleteSelectedTeams', async (req, res) => {
 // stage functionalities
 app.post("/portal/addStage", (req,res) => {
 	if(!req.body.stage){
+		 
 		res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
 	database.Stage.create({
 		stage: req.body.stage,
 	}).catch((err) => {
+		 
 		res.json({success:false, error: err});
 	});
+	 
 	res.json({success:true});
 });
 app.get('/portal/getStages', async (req,res) => {
 	try {
 		const stages = await database.Stage.find();
+		 
 		res.json({success: true, stages:stages});
 	} catch (error) {
+		 
 		res.json({success: true, error:error});
 	}
 })
 app.post('/portal/getSelectedStages', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -391,14 +440,16 @@ app.post('/portal/getSelectedStages', async (req, res) => {
 	selectedStages = await database.Stage.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedStages: selectedStages });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedStages', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -408,8 +459,10 @@ app.post('/portal/deleteSelectedStages', async (req, res) => {
   try {
     database.Stage.deleteMany({_id: { $in: selectedRows }}).then((result) => {console.log(`${result.deletedCount} stages deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -417,26 +470,32 @@ app.post('/portal/deleteSelectedStages', async (req, res) => {
 // sources functionalities
 app.post("/portal/addSource", (req,res) => {
 	if(!req.body.source){
+		 
 		res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
 	database.Source.create({
 		source: req.body.source,
 	}).catch((err) => {
+		 
 		res.json({success:false, error: err});
 	});
+	 
 	res.json({success:true});
 });
 app.get('/portal/getSources', async (req,res) => {
 	try {
 		const sources = await database.Source.find();
+		 
 		res.json({success: true, sources:sources});
 	} catch (error) {
+		 
 		res.json({success: true, error:error});
 	}
 })
 app.post('/portal/getSelectedSources', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -447,14 +506,16 @@ app.post('/portal/getSelectedSources', async (req, res) => {
 	selectedSources = await database.Source.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedSources: selectedSources });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedSources', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -466,6 +527,7 @@ app.post('/portal/deleteSelectedSources', async (req, res) => {
 	})
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -473,26 +535,32 @@ app.post('/portal/deleteSelectedSources', async (req, res) => {
 // property types functionalities
 app.post("/portal/addProperty_Type", (req,res) => {
 	if(!req.body.ptype){
+		 
 		res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
 	database.Property_Type.create({
 		bedrooms: req.body.ptype,
 	}).catch((err) => {
+		 
 		res.json({success:false, error: err});
 	});
+	 
 	res.json({success:true});
 })
 app.get('/portal/getProperty_Types', async (req,res) => {
 	try {
 		const property_types = await database.Property_Type.find();
+		 
 		res.json({success: true, property_types:property_types});
 	} catch (error) {
+		 
 		res.json({success: true, error:error});
 	}
 })
 app.post('/portal/getSelectedProperty_Types', async (req, res) => {
 	if (!req.body.selectedRows) {
+	 	
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -506,11 +574,13 @@ app.post('/portal/getSelectedProperty_Types', async (req, res) => {
 
 	res.json({ success: true, selectedProperty_types: selectedProperty_types });
 	} catch (error) {
+	 	
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedProperty_Types', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -520,8 +590,10 @@ app.post('/portal/deleteSelectedProperty_Types', async (req, res) => {
   try {
     database.Property_Type.deleteMany({_id: { $in: selectedRows }}).then((result) => {console.log(`${result.deletedCount} Property_types deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -532,7 +604,7 @@ app.post("/portal/addContracts", (req,res) => {
 	   !req.body.stage || !req.body.Fname || !req.body.Lname || !req.body.dev || 
 	   !req.body.project || !req.body.ptype || !req.body.Property_Num || !req.body.Property_Price || 
 	   !req.body.Total_Commission || !req.body.Kickback_from_Commission || !req.body.Prime_Agent  || !req.body.Percentage_from_Pot_to_Prime_Agent  || !req.body.Percentage_to_Apex_from_Prime_Agent || !req.body.MOU_date || !req.body.payment_realised_date || !req.body.Agent_payout_Date){
-		   
+		    
 		return res.json({success: false, message:"Enter needed Parameters"});
 	}
 	
@@ -612,9 +684,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
@@ -676,9 +750,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
@@ -739,9 +815,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
@@ -802,9 +880,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null )) && 
@@ -866,9 +946,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 		
@@ -931,9 +1013,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 		
@@ -995,9 +1079,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 		
@@ -1059,9 +1145,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 		
@@ -1127,9 +1215,12 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
+			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
 			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
@@ -1196,6 +1287,8 @@ app.post("/portal/addContracts", (req,res) => {
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
+			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
 			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
@@ -1258,9 +1351,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
@@ -1324,9 +1419,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
@@ -1385,9 +1482,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
@@ -1446,9 +1545,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
@@ -1506,9 +1607,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: req.body.other_payouts,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
@@ -1566,9 +1669,11 @@ app.post("/portal/addContracts", (req,res) => {
 			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
 			Other_Payouts: 0,
 		}).catch((err) => {
+			 
 			return res.json({success:false, message: err});
 		});
 		} else{
+			 
 			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
 		}
 	}
@@ -1576,20 +1681,25 @@ app.post("/portal/addContracts", (req,res) => {
 
 
 	else {
+		 
 			return res.json({success:false, message: 'Properly select agent inputs and percentages'});
 		}
+		 
 	return res.json({success:true});
 })
 app.get('/portal/getContracts', async (req,res) => {
 	  try {
     const contracts = await database.Contracts.find();
+	 
     res.json({ success: true, contracts: contracts });
   } catch (error) {
+	 
     res.json({ success: false, error: error });
   }
 })
 app.post('/portal/getSelectedContracts', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -1600,14 +1710,16 @@ app.post('/portal/getSelectedContracts', async (req, res) => {
 	selectedcontracts = await database.Contracts.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedContracts: selectedContracts });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedContracts', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -1617,8 +1729,10 @@ app.post('/portal/deleteSelectedContracts', async (req, res) => {
   try {
     database.Contracts.deleteMany({_id: { $in: selectedRows }}).then((result) => {console.log(`${result.deletedCount} Contracts deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
@@ -1635,9 +1749,11 @@ app.get('/portal/getCommisionContracts', async (req,res) => {
     .then((result) => {
       const commission_amount = result.length > 0 ? result[0].commission_amount : 0;
       const formattedValue = commission_amount.toLocaleString(undefined, {minimumFractionDigits:0,maximumFractionDigits:0});
+	   
 	  res.json({ success: true, message: 'Commission calculated successfully!', formattedValue: formattedValue });
     })
     .catch((err) => {
+		 
       res.json({ success: false, message: 'Error' });
     });
 })
@@ -1675,7 +1791,7 @@ app.get('/portal/getEmployeeCommissionEarned', async (req,res) => {
 
     // Wait for all agent net pay calculations to complete
     const agentNetPayResults = await Promise.all(agentNetPayPromises);
-
+	 
     res.json(agentNetPayResults);
   } catch (error) {
     console.error(error);
@@ -1703,13 +1819,16 @@ app.get('/portal/getEmployeeCommissionDate', async (req,res) => {
 app.get('/portal/getDevelopers', async (req,res) => {
 	try {
 		const devs = await database.Development.find();
+		 
 		res.json({success: true, devs:devs});
 	} catch (error) {
+		 
 		res.json({success: false, error:error});
 	}
 })
 app.post('/portal/getSelectedDevelopers', async (req, res) => {
 	if (!req.body.selectedRows) {
+		 
 	res.json({ success: false, error: 'No selected rows received' });
 	return;
 	}
@@ -1720,14 +1839,16 @@ app.post('/portal/getSelectedDevelopers', async (req, res) => {
 	selectedDevelopers = await database.Development.find({
 	  _id: { $in: selectedRows },
 	});
-
+	 
 	res.json({ success: true, selectedDevelopers: selectedDevelopers });
 	} catch (error) {
+		 
 	res.json({ success: false, error: error });
 	}
 })
 app.post('/portal/deleteSelectedDevelopers', async (req, res) => {
   if (!req.body.selectedRows) {
+	   
     res.json({ success: false, error: 'No selected rows received' });
     return;
   }
@@ -1737,13 +1858,16 @@ app.post('/portal/deleteSelectedDevelopers', async (req, res) => {
   try {
     database.Development.deleteMany({_id: { $in: selectedRows }}).then((result) => {console.log(`${result.deletedCount} developers deleted.`);
 	})
+	 
     res.json({ success: true});
   } catch (error) {
+	   
     res.json({ success: false, error: error });
   }
 });
 app.post("/portal/addDeveloper", async (req,res) => {
 	if(!req.body.deve){
+		 
 		return res.json({success: false, error:"Enter needed Parameters"});
 	}
 	
@@ -1751,9 +1875,11 @@ app.post("/portal/addDeveloper", async (req,res) => {
 	await database.Development.create({
 		developer: req.body.deve,
 	});
+	 
 	    res.json({ success: true });
 	} catch (err) {
 		console.log('Error during add developer:', err);
+		 
 		res.json({ success: false, error: err });
 	}
 });
