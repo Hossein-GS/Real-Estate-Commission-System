@@ -12,6 +12,7 @@ const Bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const database = require('./models');
+const helmet = require('helmet');
 var selectedEmployees;
 var selectedDevelopers;
 var selectedTeams;
@@ -33,9 +34,17 @@ mongoose.connection.on('connected', () => {
   console.log('Connected to MongoDB');
 });
 
+app.use(
+  helmet({
+    referrerPolicy: {
+      policy: 'origin-when-cross-origin',
+    },
+  })
+);
+
 app.use(cors({
 	origin: '*'
-}));
+}))
 
 app.use(BodyParser.json());
 
@@ -134,10 +143,8 @@ app.post("/portal/signup", (req,res) => {
 		position: req.body.position
 	}).then((employee) => {
 		const token = JsonWebToken.sign({id: employee._id, email: employee.email}, SECRET_JWT_CODE);
-		response.setHeader('Access-Control-Allow-Origin', '*');
 		res.json({success: true, token: token});
 	}).catch((err) => {
-		response.setHeader('Access-Control-Allow-Origin', '*');
 		res.json({success:false, error: err});
 	})
 	
@@ -1692,10 +1699,10 @@ app.post("/portal/addContracts", (req,res) => {
 app.get('/portal/getContracts', async (req,res) => {
 	  try {
     const contracts = await database.Contracts.find();
-	 
+	res.set('Referrer-Policy', 'Access-Control-Allow-Origin');
     res.json({ success: true, contracts: contracts });
   } catch (error) {
-	 
+	res.set('Referrer-Policy', 'Access-Control-Allow-Origin'); 
     res.json({ success: false, error: error });
   }
 })

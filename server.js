@@ -12,6 +12,7 @@ const Bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const database = require('./models');
+const helmet = require('helmet');
 var selectedEmployees;
 var selectedDevelopers;
 var selectedTeams;
@@ -33,9 +34,11 @@ mongoose.connection.on('connected', () => {
   console.log('Connected to MongoDB');
 });
 
+
+
 app.use(cors({
 	origin: '*'
-}));
+}))
 
 app.use(BodyParser.json());
 
@@ -1690,10 +1693,10 @@ app.post("/portal/addContracts", (req,res) => {
 app.get('/portal/getContracts', async (req,res) => {
 	  try {
     const contracts = await database.Contracts.find();
-	 
+	res.set('Referrer-Policy', 'Access-Control-Allow-Origin');
     res.json({ success: true, contracts: contracts });
   } catch (error) {
-	 
+	res.set('Referrer-Policy', 'Access-Control-Allow-Origin'); 
     res.json({ success: false, error: error });
   }
 })
