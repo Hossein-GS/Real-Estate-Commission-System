@@ -20,8 +20,8 @@
 ![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/Dashboard.PNG)
 ![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/ManageTeam.PNG)
 ![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/Database.PNG)
-![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/Contracts.PNG)
-![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/FinancialAnalysis.PNG)
+![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/Contracts.PNG)
+![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/FinancialAnalysis.PNG)
 
 
 # Thank you
