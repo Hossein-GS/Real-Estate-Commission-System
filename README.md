@@ -16,7 +16,7 @@
     - Filtering Capabilites to view specific info from graphs.
     - Side Bar to navigate between different pages.
 ## Example 
-![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/LoginPage.PNG?raw=true)
+![alt text](https://github.com/Hossein-GS/Real-Estate-Commission-System/blob/main/Examples/LoginPage.PNG)
 ![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/Dashboard.PNG?raw=true)
 ![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/ManageTeam.PNG?raw=true)
 ![alt text](https://github.com/Hossein-GS/Real_Estate_Commission_System/blob/main/Examples/Database.PNG?raw=true)
