@@ -603,1090 +603,206 @@ app.post('/portal/deleteSelectedProperty_Types', async (req, res) => {
 
 // contracts functionalities
 app.post("/portal/addContracts", (req,res) => {
-	if(!req.body.SNo || !req.body.Start_Date || !req.body.source || !req.body.team || 
-	   !req.body.stage || !req.body.Fname || !req.body.Lname || !req.body.dev || 
-	   !req.body.project || !req.body.ptype || !req.body.Property_Num || !req.body.Property_Price || 
-	   !req.body.Total_Commission || !req.body.Kickback_from_Commission || !req.body.Prime_Agent  || !req.body.Percentage_from_Pot_to_Prime_Agent  || !req.body.Percentage_to_Apex_from_Prime_Agent || !req.body.MOU_date || !req.body.payment_realised_date || !req.body.Agent_payout_Date){
-		    
-		return res.json({success: false, message:"Enter needed Parameters"});
+	const requiredParams = [
+    "SNo", "Start_Date", "source", "team", "stage", "Fname", "Lname", "dev", "project",
+    "ptype", "Property_Num", "Property_Price", "Total_Commission", "Kickback_from_Commission",
+    "Prime_Agent", "Percentage_from_Pot_to_Prime_Agent", "Percentage_to_Apex_from_Prime_Agent",
+    "MOU_date", "payment_realised_date", "Agent_payout_Date"
+	];
+	  
+	for (const param of requiredParams) {
+		if (!req.body[param]) {
+		  return res.json({ success: false, message: `Enter ${param}` });
+		}
 	}
+	
+	const sec1Y = (((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null 
+					 ));
+					 
+	const sec1N = (((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent1 === null 
+					 ));
+					 
+	const sec2Y = (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null ));
+	
+	const sec2N = (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent2 === null ));
+					 
+	const sec3Y = (((req.body.Secondary_Agent3 !== null || req.body.Secondary_Agent3 !== "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent3 !== null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent3 !== null ));
+	
+	const sec3N = (((req.body.Secondary_Agent3 === null || req.body.Secondary_Agent3 === "") && 
+					 req.body.Percentage_from_Pot_to_Secondary_Agent3 === null  && 
+					 req.body.Percentage_to_Apex_from_Secondary_Agent3 === null ));
+					 
+	const entMktY = (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null);
+	const entMktN = (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null);
+	
+	const otherPayoutY = (req.body.other_payouts !== null);
+	const otherPayoutN = (req.body.other_payouts === null);
+	
+	const AEDkickbackY = (req.body.Kickback_from_Commission_AED !== null);
+	const AEDkickbackN = (req.body.Kickback_from_Commission_AED === null);
 	
 	let Gross_Comm_Amount = (req.body.Property_Price*(req.body.Total_Commission/100));
 	let Kickback_amount = (req.body.Property_Price*(req.body.Kickback_from_Commission/100));
+	let kickback_amount_aed = 0;
 	let Gross_Comm_To_Pot = Gross_Comm_Amount - Kickback_amount;
 	let Total_Comm_To_Mkt_Ent = 0;
 	let AED_To_Prime_Agent = 0;
 	let AED_To_Secondary_Agent1 = 0;
 	let AED_To_Secondary_Agent2 = 0;
+	let AED_To_Secondary_Agent3 = 0;
 	let AED_To_Apex_From_Prime_Agent = 0;
 	let AED_To_Apex_From_Secondary_Agent1 = 0;
 	let AED_To_Apex_From_Secondary_Agent2 =0;
+	let AED_To_Apex_From_Secondary_Agent3 =0;
 	let AED_Net_to_Prime_Agent = 0;
 	let AED_Net_To_Secondary_Agent1 = 0;
 	let AED_Net_To_Secondary_Agent2 = 0;
+	let AED_Net_To_Secondary_Agent3 = 0;
 	let AED_Net_Total_To_Apex_Comm = 0;
 	let agent_earning_percentage = 0;
+	let otherpayout = 0;
+	let prime_percentage = 0;
+	let sec1_percentage = 0;
+	let sec2_percentage = 0;	
+	let sec3_percentage = 0;
 	
-	 
-	if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
-	   (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-	   (req.body.other_payouts !== null)){
-		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
-	   (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-	   (req.body.other_payouts === null)){
-		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
-	   (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-	   (req.body.other_payouts !== null)){
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null )) && 
-	   (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-	   (req.body.other_payouts === null)){
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null )) && 
-	   (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-	   (req.body.other_payouts !== null)){
-		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent2;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			Secondary_Agent1: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-		
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null )) && 
-	   (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-	   (req.body.other_payouts === null)){
-		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent2;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			Secondary_Agent1: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-		
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null )) && 
-	   (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-	   (req.body.other_payouts !== null)){
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent2;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			Secondary_Agent1: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-		
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null )) && 
-	   (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-	   (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-	   (req.body.other_payouts === null)){
-		agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent2;
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			Secondary_Agent1: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-		
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
-			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-			 (req.body.other_payouts !== null)){
-		 Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		 AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		 AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		 AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
-			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-			 (req.body.other_payouts === null)){
-		 Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		 AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		 AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		 AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
-			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null)&&
-			 (req.body.other_payouts !== null)){
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		 AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		 AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		 AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null ))&&
-			 (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null)&&
-			 (req.body.other_payouts === null)){
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent1/100);
-		 AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * (req.body.Percentage_to_Apex_from_Secondary_Agent1/100);
-		 AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * (req.body.Percentage_to_Apex_from_Secondary_Agent2/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		 AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent1/100) + (req.body.Percentage_from_Pot_to_Secondary_Agent2/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: req.body.Secondary_Agent1,
-			Secondary_Agent2: req.body.Secondary_Agent2,
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1,
-			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1,
-			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: 0,
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
-			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
-			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
-			 (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-			 (req.body.other_payouts !== null)){
-		 Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent + AED_To_Apex_From_Prime_Agent;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: "-",
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: 0,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
-			 (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent !== null) &&
-			 (req.body.other_payouts === null)){
-		 Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent + AED_To_Apex_From_Prime_Agent;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100) + (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: "-",
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: 0,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
-			 (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-			 (req.body.other_payouts !== null)){
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: "-",
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: 0,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Total_Comm_To_Mkt_Ent: 0,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: req.body.other_payouts,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
-	} else if((((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent1 === null ))&&
-			 (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "")  && req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && req.body.Percentage_to_Apex_from_Secondary_Agent2 === null )) && 
-			 (req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent === null) &&
-			 (req.body.other_payouts === null)){
-		 AED_To_Prime_Agent = (Gross_Comm_To_Pot) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
-		 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
-		 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2;
-		 agent_earning_percentage = (req.body.Percentage_from_Pot_to_Prime_Agent/100);
-		if(agent_earning_percentage === 1){
-		database.Contracts.create({
-			SNo: req.body.SNo,
-			Start_Date: req.body.Start_Date,
-			Source: req.body.source,
-			Team: req.body.team,
-			Stage: req.body.stage,
-			First_Name: req.body.Fname,
-			Last_Name: req.body.Lname,
-			Developer: req.body.dev,
-			Project_Name: req.body.project,
-			Bedrooms: req.body.ptype,
-			Property: req.body.Property_Num,
-			Property_Price: req.body.Property_Price,
-			Total_Commission: req.body.Total_Commission,
-			Kickback_from_Commission: req.body.Kickback_from_Commission,
-			Prime_Agent: req.body.Prime_Agent,
-			Secondary_Agent1: "-",
-			Secondary_Agent2: "-",
-			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
-			percentage_from_Pot_to_Secondary_Agent1: 0,
-			percentage_from_Pot_to_Secondary_Agent2: 0,
-			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
-			percentage_to_Apex_from_Secondary_Agent1: 0,
-			percentage_to_Apex_from_Secondary_Agent2: 0,
-			percentage_of_Total_Comm_for_Mkt_and_Ent: 0,
-			MOU_date: req.body.MOU_date,
-			payment_realised_date: req.body.payment_realised_date,
-			Agent_payout_Date: req.body.Agent_payout_Date,
-			Notes: req.body.note,
-			Total_Comm_To_Mkt_Ent: 0,
-			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
-			Kickback_amount: Kickback_amount.toFixed(2),
-			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
-			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
-			AED_To_Secondary_Agent1: 0,
-			AED_To_Secondary_Agent2: 0,
-			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
-			AED_To_Apex_From_Secondary_Agent1: 0,
-			AED_To_Apex_From_Secondary_Agent2: 0,
-			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
-			AED_Net_To_Secondary_Agent1: 0,
-			AED_Net_To_Secondary_Agent2: 0,
-			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
-			Other_Payouts: 0,
-		}).catch((err) => {
-			 
-			return res.json({success:false, message: err});
-		});
-		} else{
-			 
-			return res.json({success:false, message: 'Agent commission and marketing/entertainment percentage total should be 100'});
-		}
+	if(AEDkickbackY){
+		kickback_amount_aed = req.body.Kickback_from_Commission_AED;
+		Kickback_amount = Kickback_amount - kickback_amount_aed;
 	}
-
-
-
-	else {
-		 
-			return res.json({success:false, message: 'Properly select agent inputs and percentages'});
-		}
+	else
+		kickback_amount_aed = 0;
+	
+	if(otherPayoutY)
+		otherpayout = req.body.other_payouts;
+	else
+		otherpayout = 0;
+	
+	if(entMktY)
+		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * ((req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent || 0)/100);
+	else
+		Total_Comm_To_Mkt_Ent = 0;
+	
+	
+	if(sec1Y){
+		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent1)/100);
+		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * ((req.body.Percentage_to_Apex_from_Secondary_Agent1)/100);
+		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
+		sec1_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent1/100;
+	} else if(sec1N){
+		AED_To_Secondary_Agent1 = 0;
+		AED_To_Apex_From_Secondary_Agent1 = 0;
+		AED_Net_To_Secondary_Agent1 =0;
+		sec1_percentage = 0;
+	} else{
+		return res.json({success:false, message: 'Secondary Agent 1 should be selected to enter their percentage'});
+	}
+		
+	if(sec2Y){
+		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent2)/100);
+		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * ((req.body.Percentage_to_Apex_from_Secondary_Agent2)/100);
+		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
+		sec2_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent2/100;
+	}else if(sec2N){
+		AED_To_Secondary_Agent2 = 0;
+		AED_To_Apex_From_Secondary_Agent2 = 0;
+		AED_Net_To_Secondary_Agent2 = 0;
+		sec2_percentage = 0;
+	} else{
+		return res.json({success:false, message: 'Secondary Agent 2 should be selected to enter their percentage'});
+	}
+	
+	if(sec3Y){
+		AED_To_Secondary_Agent3 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent3)/100);
+		AED_To_Apex_From_Secondary_Agent3 = AED_To_Secondary_Agent3 * ((req.body.Percentage_to_Apex_from_Secondary_Agent3)/100);
+		AED_Net_To_Secondary_Agent3 = AED_To_Secondary_Agent3 - AED_To_Apex_From_Secondary_Agent3;
+		sec3_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent3/100;
+	} else if(sec3N){
+		AED_To_Secondary_Agent3 = 0;
+		AED_To_Apex_From_Secondary_Agent3 = 0;
+		AED_Net_To_Secondary_Agent3 = 0;
+		sec3_percentage = 0;
+	} else{
+		return res.json({success:false, message: 'Secondary Agent 3 should be selected to enter their percentage'});
+	}
+	
+	 AED_To_Prime_Agent = (Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent) * (req.body.Percentage_from_Pot_to_Prime_Agent/100);
+	 
+	 AED_To_Apex_From_Prime_Agent = AED_To_Prime_Agent * (req.body.Percentage_to_Apex_from_Prime_Agent/100);
+	 
+	 AED_Net_to_Prime_Agent = AED_To_Prime_Agent - AED_To_Apex_From_Prime_Agent;
+	 
+	 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 - AED_To_Secondary_Agent3 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2 + AED_To_Apex_From_Secondary_Agent3;
+	 
+	 prime_percentage = req.body.Percentage_from_Pot_to_Prime_Agent/100;
+	 agent_earning_percentage = prime_percentage + sec1_percentage + sec2_percentage + sec3_percentage;
+	if(agent_earning_percentage === 1){
+		database.Contracts.create({
+			SNo: req.body.SNo,
+			Start_Date: req.body.Start_Date,
+			Source: req.body.source,
+			Team: req.body.team,
+			Stage: req.body.stage,
+			First_Name: req.body.Fname,
+			Last_Name: req.body.Lname,
+			Developer: req.body.dev,
+			Project_Name: req.body.project,
+			Bedrooms: req.body.ptype,
+			Property: req.body.Property_Num,
+			Property_Price: req.body.Property_Price,
+			Total_Commission: req.body.Total_Commission,
+			Kickback_from_Commission: req.body.Kickback_from_Commission,
+			Kickback_from_Commission_AED: kickback_amount_aed,
+			Prime_Agent: req.body.Prime_Agent,
+			Secondary_Agent1: req.body.Secondary_Agent1 || "-",
+			Secondary_Agent2: req.body.Secondary_Agent2 || "-",
+			Secondary_Agent3: req.body.Secondary_Agent3 || "-",
+			percentage_from_Pot_to_Prime_Agent: req.body.Percentage_from_Pot_to_Prime_Agent,
+			percentage_from_Pot_to_Secondary_Agent1: req.body.Percentage_from_Pot_to_Secondary_Agent1 || 0,
+			percentage_from_Pot_to_Secondary_Agent2: req.body.Percentage_from_Pot_to_Secondary_Agent2 || 0,
+			percentage_from_Pot_to_Secondary_Agent3: req.body.Percentage_from_Pot_to_Secondary_Agent3 || 0,
+			percentage_to_Apex_from_Prime_Agent: req.body.Percentage_to_Apex_from_Prime_Agent,
+			percentage_to_Apex_from_Secondary_Agent1: req.body.Percentage_to_Apex_from_Secondary_Agent1 || 0,
+			percentage_to_Apex_from_Secondary_Agent2: req.body.Percentage_to_Apex_from_Secondary_Agent2 || 0,
+			percentage_to_Apex_from_Secondary_Agent3: req.body.Percentage_to_Apex_from_Secondary_Agent3 || 0,
+			percentage_of_Total_Comm_for_Mkt_and_Ent: req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent || 0,
+			MOU_date: req.body.MOU_date,
+			payment_realised_date: req.body.payment_realised_date,
+			Agent_payout_Date: req.body.Agent_payout_Date,
+			Notes: req.body.note,
+			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
+			Kickback_amount: Kickback_amount.toFixed(2),
+			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
+			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
+			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
+			AED_To_Secondary_Agent1: AED_To_Secondary_Agent1.toFixed(2),
+			AED_To_Secondary_Agent2: AED_To_Secondary_Agent2.toFixed(2),
+			AED_To_Secondary_Agent3: AED_To_Secondary_Agent3.toFixed(2),
+			AED_To_Apex_From_Prime_Agent: AED_To_Apex_From_Prime_Agent.toFixed(2),
+			AED_To_Apex_From_Secondary_Agent1: AED_To_Apex_From_Secondary_Agent1.toFixed(2),
+			AED_To_Apex_From_Secondary_Agent2: AED_To_Apex_From_Secondary_Agent2.toFixed(2),
+			AED_To_Apex_From_Secondary_Agent3: AED_To_Apex_From_Secondary_Agent3.toFixed(2),
+			AED_Net_to_Prime_Agent: AED_Net_to_Prime_Agent.toFixed(2),
+			AED_Net_To_Secondary_Agent1: AED_Net_To_Secondary_Agent1.toFixed(2),
+			AED_Net_To_Secondary_Agent2: AED_Net_To_Secondary_Agent2.toFixed(2),
+			AED_Net_To_Secondary_Agent3: AED_Net_To_Secondary_Agent3.toFixed(2),
+			AED_Net_Total_To_Apex_Comm: AED_Net_Total_To_Apex_Comm.toFixed(2),
+			Other_Payouts: req.body.other_payouts || 0,
+		}).catch((err) => {
+			 
+			return res.json({success:false, message: err});
+		});
+	}
 		 
 	return res.json({success:true});
 })

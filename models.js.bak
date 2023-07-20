@@ -18,6 +18,10 @@ const contractSchema = new mongoose.Schema({
   Property_Price: Number,
   Total_Commission: Number,
   Kickback_from_Commission: Number,
+  Kickback_from_Commission_AED:{
+	type: Number,
+	require: false	
+  }
   Prime_Agent: {
 	  type: String,
 	  require: true
@@ -73,7 +77,10 @@ const contractSchema = new mongoose.Schema({
   AED_Net_To_Secondary_Agent1: Number,
   AED_Net_To_Secondary_Agent2: Number,
   AED_Net_Total_To_Apex_Comm: Number,
-  Other_Payouts: Number,
+  Other_Payouts: {
+	  type: Number,
+	  require: false,
+  },
 }, {collection: "Contracts"});
 
 const employeesSchema = new mongoose.Schema({

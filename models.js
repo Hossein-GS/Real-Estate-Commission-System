@@ -18,6 +18,10 @@ const contractSchema = new mongoose.Schema({
   Property_Price: Number,
   Total_Commission: Number,
   Kickback_from_Commission: Number,
+  Kickback_from_Commission_AED:{
+	type: Number,
+	require: false	
+  },
   Prime_Agent: {
 	  type: String,
 	  require: true
@@ -30,6 +34,10 @@ const contractSchema = new mongoose.Schema({
 	  type:String,
 	  require: false
   },
+  Secondary_Agent3: {
+	  type:String,
+	  require: false
+  },
   percentage_from_Pot_to_Prime_Agent: Number,
   percentage_from_Pot_to_Secondary_Agent1: {
 	  type:Number,
@@ -39,12 +47,20 @@ const contractSchema = new mongoose.Schema({
 	  type:Number,
 	  require: false
   },
+  percentage_from_Pot_to_Secondary_Agent3: {
+	  type:Number,
+	  require: false
+  },
   percentage_to_Apex_from_Prime_Agent: Number,
   percentage_to_Apex_from_Secondary_Agent1: {
 	  type:Number,
 	  require: false
   },
   percentage_to_Apex_from_Secondary_Agent2: {
+	  type:Number,
+	  require: false
+  },
+  percentage_to_Apex_from_Secondary_Agent3: {
 	  type:Number,
 	  require: false
   },
@@ -66,12 +82,15 @@ const contractSchema = new mongoose.Schema({
   AED_To_Prime_Agent: Number,
   AED_To_Secondary_Agent1: Number,
   AED_To_Secondary_Agent2: Number,
+   AED_To_Secondary_Agent3: Number,
   AED_To_Apex_From_Prime_Agent: Number,
   AED_To_Apex_From_Secondary_Agent1: Number,
   AED_To_Apex_From_Secondary_Agent2: Number,
+  AED_To_Apex_From_Secondary_Agent3: Number,
   AED_Net_to_Prime_Agent: Number,
   AED_Net_To_Secondary_Agent1: Number,
   AED_Net_To_Secondary_Agent2: Number,
+  AED_Net_To_Secondary_Agent3: Number,
   AED_Net_Total_To_Apex_Comm: Number,
   Other_Payouts: {
 	  type: Number,
