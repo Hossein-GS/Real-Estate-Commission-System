@@ -675,6 +675,7 @@ app.post("/portal/addContracts", (req,res) => {
 	let sec1_percentage = 0;
 	let sec2_percentage = 0;	
 	let sec3_percentage = 0;
+	let mkt_percentage = 0;
 	
 	if(AEDkickbackY){
 		kickback_amount_aed = req.body.Kickback_from_Commission_AED;
@@ -688,8 +689,10 @@ app.post("/portal/addContracts", (req,res) => {
 	else
 		otherpayout = 0;
 	
-	if(entMktY)
+	if(entMktY){
 		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * ((req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent || 0)/100);
+		mkt_percentage = req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100;
+	}
 	else
 		Total_Comm_To_Mkt_Ent = 0;
 	
@@ -745,7 +748,12 @@ app.post("/portal/addContracts", (req,res) => {
 	 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 - AED_To_Secondary_Agent3 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2 + AED_To_Apex_From_Secondary_Agent3;
 	 
 	 prime_percentage = req.body.Percentage_from_Pot_to_Prime_Agent/100;
-	 agent_earning_percentage = prime_percentage + sec1_percentage + sec2_percentage + sec3_percentage;
+	 console.log("prime %: ", prime_percentage);
+	 console.log("sec1 %: ", sec1_percentage);
+	 console.log("sec2 %: ", sec2_percentage);
+	 console.log("sec3 %: ", sec3_percentage);
+	 console.log("mkt %: ", mkt_percentage);
+	 agent_earning_percentage = prime_percentage + sec1_percentage + sec2_percentage + sec3_percentage + mkt_percentage;
 	if(agent_earning_percentage === 1){
 		database.Contracts.create({
 			SNo: req.body.SNo,
@@ -782,6 +790,7 @@ app.post("/portal/addContracts", (req,res) => {
 			Notes: req.body.note,
 			Gross_Comm_Amount: Gross_Comm_Amount.toFixed(2),
 			Kickback_amount: Kickback_amount.toFixed(2),
+			Kickback_amount2: kickback_amount_aed,
 			Gross_Comm_To_Pot: Gross_Comm_To_Pot.toFixed(2),
 			Total_Comm_To_Mkt_Ent: Total_Comm_To_Mkt_Ent.toFixed(2),
 			AED_To_Prime_Agent: AED_To_Prime_Agent.toFixed(2),
@@ -802,9 +811,11 @@ app.post("/portal/addContracts", (req,res) => {
 			 
 			return res.json({success:false, message: err});
 		});
+	}else{
+		return res.json({success:false, message: "The agents percentage total must be equal to 100%"});
 	}
 		 
-	return res.json({success:true});
+	return res.json({success:true, message: "Add contract Successful"});
 })
 app.get('/portal/getContracts', async (req,res) => {
 	  try {
@@ -900,6 +911,11 @@ app.get('/portal/getEmployeeCommissionEarned', async (req,res) => {
 	   agentContracts = await Contracts.find({ Secondary_Agent2: agentName });
        agentNetPay = agentContracts.reduce((total, contract) => {
         return total + contract.AED_Net_To_Secondary_Agent2;
+      }, 0);
+	  
+	   agentContracts = await Contracts.find({ Secondary_Agent3: agentName });
+       agentNetPay = agentContracts.reduce((total, contract) => {
+        return total + contract.AED_Net_To_Secondary_Agent3;
       }, 0);
 
       return {
