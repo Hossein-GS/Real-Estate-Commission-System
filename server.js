@@ -614,31 +614,41 @@ app.post("/portal/addContracts", (req,res) => {
 		if (!req.body[param]) {
 		  return res.json({ success: false, message: `Enter ${param}` });
 		}
+		console.log(`${param} : `,req.body[param]);
 	}
+	console.log("sec agent1 : ", req.body.Secondary_Agent1);
+	console.log("sec agent2 : ", req.body.Secondary_Agent2);
+	console.log("sec agent3 : ", req.body.Secondary_Agent3);
+	console.log("sec agent1 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent1);
+	console.log("sec agent2 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent2);
+	console.log("sec agent3 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent3);
+	console.log("sec agent1 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent1);
+	console.log("sec agent2 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent2);
+	console.log("sec agent3 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent3);
 	
-	const sec1Y = (((req.body.Secondary_Agent1 !== null || req.body.Secondary_Agent1 !== "") && 
+	const sec1Y = ((req.body.Secondary_Agent1 !== null && req.body.Secondary_Agent1 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null 
 					 ));
 					 
-	const sec1N = (((req.body.Secondary_Agent1 === null || req.body.Secondary_Agent1 === "") && 
+	const sec1N = ((req.body.Secondary_Agent1 === null && req.body.Secondary_Agent1 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent1 === null 
 					 ));
 					 
-	const sec2Y = (((req.body.Secondary_Agent2 !== null || req.body.Secondary_Agent2 !== "") && 
+	const sec2Y = ((req.body.Secondary_Agent2 !== null && req.body.Secondary_Agent2 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null ));
 	
-	const sec2N = (((req.body.Secondary_Agent2 === null || req.body.Secondary_Agent2 === "") && 
+	const sec2N = ((req.body.Secondary_Agent2 === null && req.body.Secondary_Agent2 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent2 === null ));
 					 
-	const sec3Y = (((req.body.Secondary_Agent3 !== null || req.body.Secondary_Agent3 !== "") && 
+	const sec3Y = ((req.body.Secondary_Agent3 !== null && req.body.Secondary_Agent3 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent3 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent3 !== null ));
 	
-	const sec3N = (((req.body.Secondary_Agent3 === null || req.body.Secondary_Agent3 === "") && 
+	const sec3N = ((req.body.Secondary_Agent3 === null && req.body.Secondary_Agent3 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent3 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent3 === null ));
 					 
