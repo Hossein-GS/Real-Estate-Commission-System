@@ -616,31 +616,39 @@ app.post("/portal/addContracts", (req,res) => {
 		}
 		console.log(`${param} : `,req.body[param]);
 	}
-	console.log("sec agent1: ", req.body.Secondary_Agent1);
+	console.log("sec agent1 : ", req.body.Secondary_Agent1);
+	console.log("sec agent2 : ", req.body.Secondary_Agent2);
+	console.log("sec agent3 : ", req.body.Secondary_Agent3);
+	console.log("sec agent1 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent1);
+	console.log("sec agent2 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent2);
+	console.log("sec agent3 % from pot : ", req.body.Percentage_from_Pot_to_Secondary_Agent3);
+	console.log("sec agent1 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent1);
+	console.log("sec agent2 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent2);
+	console.log("sec agent3 % to apex : ", req.body.Percentage_to_Apex_from_Secondary_Agent3);
 	
-	const sec1Y = ((req.body.Secondary_Agent1 !== null && req.body.Secondary_Agent1 !== "" && 
+	const sec1Y = ((req.body.Secondary_Agent1 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent1 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent1 !== null 
 					 ));
 					 
-	const sec1N = ((req.body.Secondary_Agent1 === null && req.body.Secondary_Agent1 === "" && 
+	const sec1N = ((req.body.Secondary_Agent1 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent1 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent1 === null 
 					 ));
 					 
-	const sec2Y = ((req.body.Secondary_Agent2 !== null && req.body.Secondary_Agent2 !== "" && 
+	const sec2Y = ((req.body.Secondary_Agent2 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent2 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent2 !== null ));
 	
-	const sec2N = ((req.body.Secondary_Agent2 === null && req.body.Secondary_Agent2 === "" && 
+	const sec2N = ((req.body.Secondary_Agent2 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent2 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent2 === null ));
 					 
-	const sec3Y = ((req.body.Secondary_Agent3 !== null && req.body.Secondary_Agent3 !== "" && 
+	const sec3Y = ((req.body.Secondary_Agent3 !== "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent3 !== null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent3 !== null ));
 	
-	const sec3N = ((req.body.Secondary_Agent3 === null && req.body.Secondary_Agent3 === "" && 
+	const sec3N = ((req.body.Secondary_Agent3 === "" && 
 					 req.body.Percentage_from_Pot_to_Secondary_Agent3 === null  && 
 					 req.body.Percentage_to_Apex_from_Secondary_Agent3 === null ));
 					 
@@ -692,8 +700,8 @@ app.post("/portal/addContracts", (req,res) => {
 		otherpayout = 0;
 	
 	if(entMktY){
-		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * ((req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent || 0)/100);
-		mkt_percentage = req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent/100;
+		Total_Comm_To_Mkt_Ent = Gross_Comm_Amount * ((req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent)/100);
+		mkt_percentage = req.body.Percentage_of_Total_Comm_for_Mkt_and_Ent;
 	}
 	else
 		Total_Comm_To_Mkt_Ent = 0;
@@ -703,7 +711,7 @@ app.post("/portal/addContracts", (req,res) => {
 		AED_To_Secondary_Agent1 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent1)/100);
 		AED_To_Apex_From_Secondary_Agent1 = AED_To_Secondary_Agent1 * ((req.body.Percentage_to_Apex_from_Secondary_Agent1)/100);
 		AED_Net_To_Secondary_Agent1 = AED_To_Secondary_Agent1 - AED_To_Apex_From_Secondary_Agent1;
-		sec1_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent1/100;
+		sec1_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent1;
 	} else if(sec1N){
 		AED_To_Secondary_Agent1 = 0;
 		AED_To_Apex_From_Secondary_Agent1 = 0;
@@ -717,7 +725,7 @@ app.post("/portal/addContracts", (req,res) => {
 		AED_To_Secondary_Agent2 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent2)/100);
 		AED_To_Apex_From_Secondary_Agent2 = AED_To_Secondary_Agent2 * ((req.body.Percentage_to_Apex_from_Secondary_Agent2)/100);
 		AED_Net_To_Secondary_Agent2 = AED_To_Secondary_Agent2 - AED_To_Apex_From_Secondary_Agent2;
-		sec2_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent2/100;
+		sec2_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent2;
 	}else if(sec2N){
 		AED_To_Secondary_Agent2 = 0;
 		AED_To_Apex_From_Secondary_Agent2 = 0;
@@ -731,7 +739,7 @@ app.post("/portal/addContracts", (req,res) => {
 		AED_To_Secondary_Agent3 = Gross_Comm_To_Pot * ((req.body.Percentage_from_Pot_to_Secondary_Agent3)/100);
 		AED_To_Apex_From_Secondary_Agent3 = AED_To_Secondary_Agent3 * ((req.body.Percentage_to_Apex_from_Secondary_Agent3)/100);
 		AED_Net_To_Secondary_Agent3 = AED_To_Secondary_Agent3 - AED_To_Apex_From_Secondary_Agent3;
-		sec3_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent3/100;
+		sec3_percentage = req.body.Percentage_from_Pot_to_Secondary_Agent3;
 	} else if(sec3N){
 		AED_To_Secondary_Agent3 = 0;
 		AED_To_Apex_From_Secondary_Agent3 = 0;
@@ -749,14 +757,15 @@ app.post("/portal/addContracts", (req,res) => {
 	 
 	 AED_Net_Total_To_Apex_Comm = Gross_Comm_To_Pot - Total_Comm_To_Mkt_Ent - AED_To_Prime_Agent - AED_To_Secondary_Agent1 - AED_To_Secondary_Agent2 - AED_To_Secondary_Agent3 + AED_To_Apex_From_Prime_Agent + AED_To_Apex_From_Secondary_Agent1 + AED_To_Apex_From_Secondary_Agent2 + AED_To_Apex_From_Secondary_Agent3;
 	 
-	 prime_percentage = req.body.Percentage_from_Pot_to_Prime_Agent/100;
+	 prime_percentage = req.body.Percentage_from_Pot_to_Prime_Agent;
 	 console.log("prime %: ", prime_percentage);
 	 console.log("sec1 %: ", sec1_percentage);
 	 console.log("sec2 %: ", sec2_percentage);
 	 console.log("sec3 %: ", sec3_percentage);
 	 console.log("mkt %: ", mkt_percentage);
 	 agent_earning_percentage = prime_percentage + sec1_percentage + sec2_percentage + sec3_percentage + mkt_percentage;
-	if(agent_earning_percentage === 1){
+	 console.log("earning percentage : ", agent_earning_percentage);
+	if(agent_earning_percentage === 100){
 		database.Contracts.create({
 			SNo: req.body.SNo,
 			Start_Date: req.body.Start_Date,
