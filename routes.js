@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const database = require('./models');
 const mongoose = require('mongoose');
+const env = require('dotenv').config();
 
-const mongoDB_URL = "mongodb+srv://Admin:Admin@test.xqmisan.mongodb.net/Company?retryWrites=true&w=majority";
-mongoose.connect(mongoDB_URL, {useNewUrlParser: true});
+
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true});
 
 router.post("/signup", (req,res) => {
 	if(!req.body.email || !req.body.password || !req.body.name)

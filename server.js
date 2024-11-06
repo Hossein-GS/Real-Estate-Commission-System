@@ -13,6 +13,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const database = require('./models');
 const helmet = require('helmet');
+const env = require('dotenv').config();
 var selectedEmployees;
 var selectedDevelopers;
 var selectedTeams;
@@ -25,10 +26,9 @@ var token;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const SECRET_JWT_CODE = "TtQ9thjwU35PWKXpSJnTiwvkHD77DywN";
-const MONGODB_URI = 'mongodb+srv://Admin:Admin@test.xqmisan.mongodb.net/Company?retryWrites=true&w=majority';
+const SECRET_JWT_CODE = process.env.SECRET_JWT_CODE;
 
-const client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 mongoose.connection.on('connected', () => {
   console.log('Connected to MongoDB');

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+const env = require('dotenv').config();
 
-const mongoDB_URL = "mongodb+srv://Admin:Admin@test.xqmisan.mongodb.net/Company?retryWrites=true&w=majority";
-mongoose.connect(mongoDB_URL, {useNewUrlParser: true});
+
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true});
 
 const contractSchema = new mongoose.Schema({
   SNo: Number,
